@@ -65,8 +65,8 @@ class DiscordClient:
                     'type': 3,
                     'status_display_type': 2,
                     'application_id': self.app_id,
-                    'details': details,
-                    'state': state
+                    'details': str(details)[:128],
+                    'state': str(state)[:128]
                 }],
                 'status': 'online',
                 'afk': False
@@ -107,7 +107,6 @@ class DiscordClient:
 
     def on_close(self, ws, close_status_code, close_msg):
         xbmc.log(f"[{ADDON_ID}] Discord WS Closed.", level=xbmc.LOGINFO)
-        # Hier könnte man eine Reconnect-Logik implementieren
 
     def connect(self):
         self.ws = websocket.WebSocketApp("wss://gateway.discord.gg/?v=9&encoding=json",
@@ -125,7 +124,7 @@ class KodiMonitor(xbmc.Player):
         self.last_media_type = None
 
     def onPlayBackStarted(self):
-        time.sleep(1) # Gib Kodi eine Sekunde Zeit, um Metadaten zu laden
+        time.sleep(3) # Gib Kodi 3 Sekunden Zeit, um Metadaten zu laden
         video_info = self.getVideoInfoTag()
         if not video_info:
             return
@@ -139,7 +138,7 @@ class KodiMonitor(xbmc.Player):
             year = video_info.getYear()
             genre = video_info.getGenre()
             details = f"{title} ({year})"
-            state = genre.split(' / ')[0] if genre else "Movie"
+            state = 🎭 » genre.split(' / ')[0] if genre else "🎬 Film"
             self.last_media_type = 'movie'
 
         elif media_type == 'episode':
@@ -149,14 +148,16 @@ class KodiMonitor(xbmc.Player):
             episode = video_info.getEpisode()
             episode_title = video_info.getTitle()
             details = f"{show_title} ({year})"
-            state = f"S{season:02d}E{episode:02d} | {episode_title}"
+            state = f"S{season:02d}E{episode:02d} » {episode_title}"
             self.last_media_type = 'episode'
 
         elif xbmc.getCondVisibility('Pvr.IsPlayingTv'):
+            channel = video_info.getChannelName()
             title = video_info.getTitle()
-            channel = video_info.getStation() if hasattr(video_info, 'getStation') else xbmc.getInfoLabel('Player.ChannelName')
-            details = title or "Unbekannte Sendung"
-            state = channel or "Unbekannter Sender"
+            season = video_info.getSeason()
+            episode = video_info.getEpisode()
+            details = f"{channel}"
+            state = f"{title} » S{season:02d}E{episode:02d}" if season else "📺 Live TV"
             self.last_media_type = 'livetv'
             xbmc.log(f"[{ADDON_ID}] LiveTV erkannt – Sende '{details}' auf '{state}'", level=xbmc.LOGINFO)
 
